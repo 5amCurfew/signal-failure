@@ -1,0 +1,31 @@
+{
+  "name": "signal-failure-ui",
+  "version": "0.1.0",
+  "private": true,
+  "main": "node_modules/expo/AppEntry.js",
+  "scripts": {
+    "start": "expo start --web --port 8080",
+    "web": "expo start --web --port 8080",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "lint": "eslint . --ext .js,.jsx"
+  },
+  "dependencies": {
+    "@expo/metro-runtime": "~3.2.3",
+    "expo": "^51.0.8",
+    "expo-router": "~3.5.24",
+    "expo-status-bar": "~1.12.1",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-native": "0.74.5",
+    "react-native-event-source": "^1.1.0",
+    "react-native-web": "~0.19.10"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "eslint-config-universe": "^12.1.0"
+  },
+  "eslintConfig": {
+    "extends": "universe/native"
+  }
+}

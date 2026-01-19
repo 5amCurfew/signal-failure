@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "signal-failure UI",
+    "slug": "signal-failure-ui",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "extra": {
+      "ssePath": "/events"
+    },
+    "ios": {
+      "bundleIdentifier": "com.anonymous.signal-failure-ui"
+    },
+    "plugins": [
+      "expo-router"
+    ]
+  }
+}

@@ -1,0 +1,19 @@
+services:
+  api:
+    build:
+      context: ./api
+    container_name: signal-failure-api
+    environment:
+      - PORT=3000
+      - PULSE_URL=https://api.tfl.gov.uk/Line/Mode/tube/Status
+    ports:
+      - "3000:3000"
+
+  ui:
+    build:
+      context: ./ui
+    container_name: signal-failure-ui
+    depends_on:
+      - api
+    ports:
+      - "8080:8080"

@@ -1,0 +1,11 @@
+.DS_Store
+.env
+.expo
+.expo-shared
+android/
+ios/
+node_modules
+npm-debug.log*
+web-build
+yarn-debug.log*
+yarn-error.log*
