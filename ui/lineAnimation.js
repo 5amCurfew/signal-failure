@@ -1,9 +1,9 @@
 import { LayoutAnimation, Platform, UIManager } from "react-native";
 
-const severityOfLine = (line) =>
-  typeof line?.lineStatuses?.[0]?.statusSeverity === "number"
-    ? line.lineStatuses[0].statusSeverity
-    : 10;
+const severityOfLine = (line) => {
+  const raw = Number(line?.lineStatuses?.[0]?.statusSeverity);
+  return Number.isFinite(raw) ? raw : 10;
+};
 
 const getLineName = (line) => line?.name || line?.id || "";
 

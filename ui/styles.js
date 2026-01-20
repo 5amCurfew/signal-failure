@@ -70,6 +70,8 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: "#fff",
     borderRadius: 16,
+    borderTopWidth: 6,
+    borderTopColor: "#0ea5e9",
     padding: 20,
     marginBottom: 16,
     shadowColor: "#000",
@@ -108,10 +110,25 @@ const styles = StyleSheet.create({
     backgroundColor: "#dcfce7",
   },
   statusChipMinor: {
-    backgroundColor: "#fef9c3",
+    backgroundColor: "#fbbf24",
+  },
+  statusChipModerate: {
+    backgroundColor: "#fdba74",
   },
   statusChipSevere: {
-    backgroundColor: "#fee2e2",
+    backgroundColor: "#fca5a5",
+  },
+  statusChipVerySevere: {
+    backgroundColor: "#f87171",
+  },
+  statusChipClosed: {
+    backgroundColor: "#fecdd3",
+  },
+  statusChipSpecial: {
+    backgroundColor: "#ddd6fe",
+  },
+  statusChipInfo: {
+    backgroundColor: "#bae6fd",
   },
   chipText: {
     fontWeight: "700",

@@ -14,7 +14,7 @@ import (
 
 const (
 	defaultPulseURL  = "https://jsonplaceholder.typicode.com/todos/1"
-	apiPulseInterval = 30 * time.Second
+	apiPulseInterval = 10 * time.Second
 )
 
 // PulsePayload represents the JSON payload returned by the upstream Pulse endpoint

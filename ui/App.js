@@ -4,6 +4,7 @@ import {
   Animated,
   ActivityIndicator,
   FlatList,
+  Platform,
   SafeAreaView,
   Text,
   View,
@@ -15,6 +16,121 @@ import {
   prepareAnimatedLineList,
 } from "./lineAnimation";
 import styles from "./styles";
+
+const normalizeLineKey = (value = "") =>
+  value.toLowerCase().replace(/[^a-z]/g, "");
+
+// TfL brand colors for each line so cards visually match their routes.
+const LINE_COLORS = {
+  bakerloo: "#B36305",
+  central: "#E32017",
+  circle: "#FFD300",
+  district: "#00782A",
+  hammersmithcity: "#F4A9BE",
+  jubilee: "#A0A5A9",
+  metropolitan: "#9B0056",
+  northern: "#000000",
+  piccadilly: "#003688",
+  victoria: "#0098D4",
+  waterloocity: "#95CDBA",
+  dlr: "#00A4A7",
+  londonoverground: "#EE7C0E",
+  elizabethline: "#6950A1",
+  tram: "#84B817",
+  cablecar: "#E21836",
+};
+
+const SEVERITY_CONFIG = {
+  0: { emoji: "✨", styleKey: "statusChipSpecial", flagReason: true },
+  1: { emoji: "🛑", styleKey: "statusChipClosed", flagReason: true },
+  2: { emoji: "🛑", styleKey: "statusChipClosed", flagReason: true },
+  3: { emoji: "⛔️", styleKey: "statusChipVerySevere", flagReason: true },
+  4: { emoji: "⛔️", styleKey: "statusChipVerySevere", flagReason: true },
+  5: { emoji: "⛔️", styleKey: "statusChipSevere", flagReason: true },
+  6: { emoji: "🚨", styleKey: "statusChipSevere", flagReason: true },
+  7: { emoji: "🟠", styleKey: "statusChipModerate", flagReason: true },
+  8: { emoji: "🚌", styleKey: "statusChipModerate", flagReason: true },
+  9: { emoji: "⚠️", styleKey: "statusChipMinor", flagReason: true },
+  10: { emoji: "✅", styleKey: "statusChipGood", flagReason: false },
+  11: { emoji: "⛔️", styleKey: "statusChipVerySevere", flagReason: true },
+  12: { emoji: "🚪", styleKey: "statusChipSpecial", flagReason: true },
+  13: { emoji: "♿️", styleKey: "statusChipInfo", flagReason: true },
+  14: { emoji: "🔁", styleKey: "statusChipModerate", flagReason: true },
+  15: { emoji: "↗️", styleKey: "statusChipInfo", flagReason: true },
+  16: { emoji: "🛑", styleKey: "statusChipClosed", flagReason: true },
+  17: { emoji: "ℹ️", styleKey: "statusChipInfo", flagReason: true },
+  18: { emoji: "✅", styleKey: "statusChipGood", flagReason: false },
+  19: { emoji: "ℹ️", styleKey: "statusChipInfo", flagReason: true },
+  20: { emoji: "🛑", styleKey: "statusChipClosed", flagReason: true },
+};
+
+// Custom web scrollbar so the feed frame feels branded.
+const SCROLLBAR_STYLE = `
+  body {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(30, 41, 59, 0.35) transparent;
+  }
+
+  body::-webkit-scrollbar {
+    width: 8px;
+    background: transparent;
+  }
+
+  body::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  body::-webkit-scrollbar-thumb {
+    background: rgba(30, 41, 59, 0.35);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.4);
+  }
+
+  body::-webkit-scrollbar-thumb:hover {
+    background: rgba(30, 64, 175, 0.55);
+  }
+`;
+
+const getLineColor = (line) => {
+  const idKey = normalizeLineKey(line?.id ?? "");
+  const nameKey = normalizeLineKey(line?.name ?? "");
+  return LINE_COLORS[idKey] || LINE_COLORS[nameKey] || "#0ea5e9";
+};
+
+const DEFAULT_SEVERITY = {
+  emoji: "✅",
+  styleKey: "statusChipGood",
+  flagReason: false,
+};
+
+const getSeverityPresentation = (severity = 0) => {
+  if (typeof severity === "number" && severity in SEVERITY_CONFIG) {
+    return SEVERITY_CONFIG[severity];
+  }
+  return DEFAULT_SEVERITY;
+};
+
+const attachWebScrollbarStyles = () => {
+  if (typeof document === "undefined") {
+    return () => {};
+  }
+
+  const existing = document.getElementById("tube-scrollbar-theme");
+  if (existing) {
+    existing.textContent = SCROLLBAR_STYLE;
+    return () => {};
+  }
+
+  const styleElement = document.createElement("style");
+  styleElement.id = "tube-scrollbar-theme";
+  styleElement.textContent = SCROLLBAR_STYLE;
+  document.head.appendChild(styleElement);
+
+  return () => {
+    styleElement.remove();
+  };
+};
 
 const getBaseUrl = () => {
   const raw = process.env.EXPO_PUBLIC_API_BASE_URL || "http://localhost:3000";
@@ -41,6 +157,13 @@ export default function App() {
 
   useEffect(() => {
     enableCardReorderAnimation();
+  }, []);
+
+  useEffect(() => {
+    if (Platform.OS !== "web") {
+      return undefined;
+    }
+    return attachWebScrollbarStyles();
   }, []);
 
   useEffect(() => {
@@ -169,22 +292,24 @@ const LineCard = React.memo(({ line, delay = 0 }) => {
   }, [fadeAnim, delay]);
 
   const statusInfo = line.lineStatuses?.[0] ?? {};
-  const severity = statusInfo.statusSeverity ?? 0;
+  const rawSeverity = Number(statusInfo.statusSeverity);
+  const severity = Number.isFinite(rawSeverity) ? rawSeverity : 0;
   const severityDescription = statusInfo.statusSeverityDescription ?? "Unknown";
   const reason = statusInfo.reason?.trim();
-  const hasDelay = severity < 9;
-  const chipLabel = hasDelay
-    ? `⚠️ ${severityDescription}`
+  const severityPresentation = getSeverityPresentation(severity);
+  const chipEmoji = severityPresentation.emoji ?? "";
+  const chipLabel = chipEmoji
+    ? `${chipEmoji} ${severityDescription}`
     : severityDescription;
-  const reasonText = hasDelay && reason ? `⚠️ ${reason}` : reason;
+  const reasonText =
+    reason && severityPresentation.flagReason
+      ? `${chipEmoji ? `${chipEmoji} ` : ""}${reason}`
+      : reason;
+  const lineColor = getLineColor(line);
 
   const chipStyle = [
     styles.statusChip,
-    severity >= 9
-      ? styles.statusChipGood
-      : severity >= 7
-        ? styles.statusChipMinor
-        : styles.statusChipSevere,
+    styles[severityPresentation.styleKey] ?? styles.statusChipGood,
   ];
 
   const translateY = fadeAnim.interpolate({
@@ -194,7 +319,14 @@ const LineCard = React.memo(({ line, delay = 0 }) => {
 
   return (
     <Animated.View
-      style={[styles.card, { opacity: fadeAnim, transform: [{ translateY }] }]}
+      style={[
+        styles.card,
+        {
+          borderTopColor: lineColor,
+          opacity: fadeAnim,
+          transform: [{ translateY }],
+        },
+      ]}
     >
       <View style={styles.cardHeader}>
         <Text style={styles.cardTitle}>{line.name}</Text>

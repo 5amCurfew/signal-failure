@@ -33,11 +33,15 @@ var (
 func EventBroker() {
 	clients := map[string]Client{}
 	var nextEventID uint64
+	var lastEvent *Event
 	for {
 		select {
 		case c := <-register:
 			clients[c.id] = c
 			log.WithField("client", c.id).Info("client registered")
+			if lastEvent != nil {
+				sendEventToClient(c, *lastEvent)
+			}
 		case c := <-unregister:
 			if _, ok := clients[c.id]; ok {
 				delete(clients, c.id)
@@ -46,23 +50,26 @@ func EventBroker() {
 		case msg := <-broadcast:
 			event := Event{ID: nextEventID, ReceivedAt: time.Now(), Data: msg}
 			nextEventID++
+			lastEvent = &event
 			for _, c := range clients {
-				client := c
-				go func(cl Client, ev Event) {
-					timer := time.NewTimer(eventSendTimeout)
-					defer timer.Stop()
-					select {
-					// Allow timeout for sending message on to client channel (buffered)
-					// If sending takes too long, drop the message for that client
-					case cl.ch <- ev:
-					case <-timer.C:
-						log.WithFields(log.Fields{
-							"client": cl.id,
-							"event":  ev.ID,
-						}).Warn("timeout sending event to client exceeded, ignoring event")
-					}
-				}(client, event)
+				sendEventToClient(c, event)
 			}
 		}
 	}
+}
+
+// sendEventToClient attempts to send an event to a client with a timeout
+func sendEventToClient(cl Client, ev Event) {
+	go func() {
+		timer := time.NewTimer(eventSendTimeout)
+		defer timer.Stop()
+		select {
+		case cl.ch <- ev:
+		case <-timer.C:
+			log.WithFields(log.Fields{
+				"client": cl.id,
+				"event":  ev.ID,
+			}).Warn("timeout sending event to client exceeded, ignoring event")
+		}
+	}()
 }
